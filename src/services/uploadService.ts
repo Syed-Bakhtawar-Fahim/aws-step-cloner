@@ -14,6 +14,7 @@ interface UploadLambdaOptions {
   functionName: string;
   roleArn: string;
   region: string;
+  lambdaExecutionRoleArn?: string;
 }
 
 interface UploadStepFunctionOptions {
@@ -46,7 +47,7 @@ export class UploadService {
     });
 
     const result = await this.lambdaClient.send(command);
-    console.log(`✅ Created Lambda: ${result.FunctionName} in ${region}`);
+    console.log(`--- Created Lambda: ${result.FunctionName} in ${region}`);
     return result.FunctionArn;
   }
 

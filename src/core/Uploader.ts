@@ -11,6 +11,7 @@ interface UploadOptions {
   stepFunctionName: string;
   stepFunctionDefinitionPath: string;
   roleArn: string;
+  lambdaExecutionRoleArn: string;
   lambdaDir: string;
   prefix?: string;
 }
@@ -34,6 +35,7 @@ export class Uploader {
       stepFunctionName,
       stepFunctionDefinitionPath,
       roleArn,
+      lambdaExecutionRoleArn,
       lambdaDir,
       prefix = "",
     } = options;
@@ -48,11 +50,14 @@ export class Uploader {
       lambdaDir,
       roleArn,
       region,
-      prefix
+      prefix,
+      lambdaExecutionRoleArn
     );
 
     if (!arnMap) {
-      throw new Error(`❌ Failed to upload Lambda: ${prefix}${stepFunctionName}`);
+      throw new Error(
+        `--- ** --- Failed to upload Lambda: ${prefix}${stepFunctionName}`
+      );
     }
 
     const newDefinition = this.updateStepFunctionDefinition(
@@ -66,7 +71,7 @@ export class Uploader {
       roleArn,
     });
 
-    console.log("🎉 Clone completed →", newStepArn);
+    console.log("---- Clone completed →", newStepArn);
     return newStepArn;
   }
 
@@ -75,7 +80,8 @@ export class Uploader {
     lambdaDir: string,
     roleArn: string,
     region: string,
-    prefix: string
+    prefix: string,
+    lambdaExecutionRoleArn: string
   ): Promise<Record<string, string>> {
     const lambdaFiles = fs
       .readdirSync(lambdaDir)
@@ -90,12 +96,13 @@ export class Uploader {
       const arn = await uploadService.uploadLambda({
         zipPath,
         functionName: newName,
-        roleArn,
+        roleArn: lambdaExecutionRoleArn || roleArn,
         region,
+        // lambdaExecutionRoleArn
       });
 
-      if(!arn) {
-        throw new Error(`❌ Failed to upload Lambda: ${newName}`);
+      if (!arn) {
+        throw new Error(`--- ** --- Failed to upload Lambda: ${newName}`);
       }
 
       arnMap[baseName] = arn;
@@ -105,11 +112,14 @@ export class Uploader {
   }
 
   private updateStepFunctionDefinition(
-    definitionPath: string,
+    definition: string | object, // accept path or JSON object
     arnMap: Record<string, string>
   ): string {
-    const definitionContent = fs.readFileSync(definitionPath, "utf-8");
-    const parsed: StepFunctionDefinition = JSON.parse(definitionContent);
+    // if definition is a string, treat it as a file path
+    const parsed: StepFunctionDefinition =
+      typeof definition === "string"
+        ? JSON.parse(fs.readFileSync(definition, "utf-8"))
+        : definition;
 
     for (const state of Object.values(parsed.States)) {
       if (state.Type === "Task" && state.Resource?.includes("lambda")) {

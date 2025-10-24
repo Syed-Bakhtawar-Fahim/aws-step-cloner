@@ -29,10 +29,11 @@ export class Downloader {
     const stepFnService = new StepFunctionService(sfnClient);
     const lambdaService = new LambdaService(lambdaClient);
 
-    const definition = await stepFnService.getStateMachineDefinition(stateMachineArn);
+    const definition =
+      await stepFnService.getStateMachineDefinition(stateMachineArn);
     const lambdaArns = stepFnService.extractLambdaArns(definition);
 
-    console.log("🔍 Found Lambdas:", lambdaArns);
+    console.log("--- Found Lambdas:", lambdaArns);
 
     for (const arn of lambdaArns) {
       const filePath = await lambdaService.downloadLambdaCode(arn, outputDir);
@@ -40,5 +41,9 @@ export class Downloader {
     }
 
     console.log("--- All Lambda functions downloaded successfully!");
+    return {
+      definition,
+      lambdaArns,
+    };
   }
 }

@@ -11,7 +11,7 @@ export class LambdaService {
 
   async downloadLambdaCode(lambdaArn: string, outputDir: string) {
     const functionName = extractLambdaNameFromArn(lambdaArn);
-    const { Code } = await this.lambda.send(
+    const { Code, Configuration } = await this.lambda.send(
       new GetFunctionCommand({ FunctionName: functionName })
     );
     const url = Code?.Location;
@@ -19,6 +19,10 @@ export class LambdaService {
 
     const response = await axios.get(url, { responseType: "arraybuffer" });
     const filePath = saveFile(outputDir, `${functionName}.zip`, response.data);
-    return filePath;
+    const envVariables = Configuration?.Environment?.Variables || {};
+    // if (Object.keys(envVariables).length > 0) {
+    //   const envFilePath = saveFile(outputDir, `${functionName}.env`, JSON.stringify(envVariables, null, 2));
+    // }
+    return {filePath, envVariables, functionName};
   }
 }

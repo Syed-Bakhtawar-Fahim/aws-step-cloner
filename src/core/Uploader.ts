@@ -9,11 +9,13 @@ interface UploadOptions {
   secretAccessKey: string;
   region: string;
   stepFunctionName: string;
-  stepFunctionDefinitionPath: string;
+  stepFunctionDefinitionPath: string | object;
   roleArn: string;
   lambdaExecutionRoleArn: string;
   lambdaDir: string;
   prefix?: string;
+  envFilePath?: string;  // JSON file with envs per lambda
+  envIncluded?: boolean; // use downloaded env
 }
 
 interface StepFunctionState {
@@ -38,6 +40,8 @@ export class Uploader {
       lambdaExecutionRoleArn,
       lambdaDir,
       prefix = "",
+      envFilePath,
+      envIncluded = false,
     } = options;
 
     const credentials = { accessKeyId, secretAccessKey };
@@ -51,13 +55,13 @@ export class Uploader {
       roleArn,
       region,
       prefix,
-      lambdaExecutionRoleArn
+      lambdaExecutionRoleArn,
+      envFilePath,
+      envIncluded
     );
 
-    if (!arnMap) {
-      throw new Error(
-        `--- ** --- Failed to upload Lambda: ${prefix}${stepFunctionName}`
-      );
+    if (!arnMap || Object.keys(arnMap).length === 0) {
+      throw new Error(`--- ** --- Failed to upload Lambda(s)`);
     }
 
     const newDefinition = this.updateStepFunctionDefinition(
@@ -81,24 +85,50 @@ export class Uploader {
     roleArn: string,
     region: string,
     prefix: string,
-    lambdaExecutionRoleArn: string
+    lambdaExecutionRoleArn: string,
+    envFilePath?: string,
+    envIncluded?: boolean
   ): Promise<Record<string, string>> {
+    // Load env JSON if provided
+    let envMap: Record<string, Record<string, string>> = {};
+    if (envFilePath) {
+      envMap = JSON.parse(fs.readFileSync(envFilePath, "utf-8"));
+    }
+
     const lambdaFiles = fs
       .readdirSync(lambdaDir)
       .filter((f) => f.endsWith(".zip"));
+
     const arnMap: Record<string, string> = {};
 
     for (const file of lambdaFiles) {
-      const baseName = path.basename(file, ".zip");
+      const baseName = path.basename(file, ".zip") as string; // strict
       const newName = `${prefix}${baseName}`;
       const zipPath = path.join(lambdaDir, file);
+
+      // Decide environment variables
+      let environmentVariables: Record<string, string> = {};
+      if (envFilePath) {
+        environmentVariables = envMap[baseName];
+      } else if (envIncluded) {
+        // Use the downloaded env for this lambda
+        const downloadedEnvPath = path.join(lambdaDir, "lambda-envs.json");
+        if (fs.existsSync(downloadedEnvPath)) {
+          const downloadedEnv = JSON.parse(fs.readFileSync(downloadedEnvPath, "utf-8"));
+          environmentVariables = downloadedEnv[baseName] || {};
+        }
+      }
+
+      environmentVariables = Object.fromEntries(
+        Object.entries(environmentVariables).map(([k, v]) => [k, String(v)])
+      );
 
       const arn = await uploadService.uploadLambda({
         zipPath,
         functionName: newName,
         roleArn: lambdaExecutionRoleArn || roleArn,
         region,
-        // lambdaExecutionRoleArn
+        environmentVariables,
       });
 
       if (!arn) {
@@ -112,10 +142,9 @@ export class Uploader {
   }
 
   private updateStepFunctionDefinition(
-    definition: string | object, // accept path or JSON object
+    definition: string | object,
     arnMap: Record<string, string>
   ): string {
-    // if definition is a string, treat it as a file path
     const parsed: StepFunctionDefinition =
       typeof definition === "string"
         ? JSON.parse(fs.readFileSync(definition, "utf-8"))

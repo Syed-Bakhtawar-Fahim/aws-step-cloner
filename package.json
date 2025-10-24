@@ -20,8 +20,16 @@
     "automation",
     "serverless"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Syed-Bakhtawar-Fahim/aws-step-cloner.git"
+  },
   "author": "Syed Bakhtawar Fahim (https://syedbakhtawarfahim.dev)",
+  "homepage": "https://github.com/Syed-Bakhtawar-Fahim/aws-step-cloner#readme",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Syed-Bakhtawar-Fahim/aws-step-cloner/issues"
+  },
   "devDependencies": {
     "@types/node": "^24.9.1",
     "eslint": "^9.38.0",

@@ -117,7 +117,53 @@ const uploadResponse = await uploader.upload({
 
 ---
 
-### 3. Combined Usage (Recommended)
+### 3. Environment Variables Handling
+
+AWS Step Cloner supports two ways of managing Lambda environment variables:
+
+#### a) Use existing environment variables `(envIncluded)`
+
+* If you want to reuse the environment variables fetched during download:
+
+``` bash
+const uploadResponse = await uploader.upload({
+  ...
+  envIncluded: true, // Use previously downloaded env variables
+});
+
+```
+
+#### b) Use a custom environment JSON file `(envFilePath)`
+
+Provide a JSON file with environment variables for each Lambda:
+
+``` json
+{
+  "Myfirst": {
+    "DB_URI": "asdadsadasdadsda",
+    "Key": "adsadasdadad",
+    "Secret": "adsadasdadad",
+    "db": "mydatabase",
+    "port": 5432,
+    "host": "localhost"
+
+  },
+  "MySecond": {
+    "DB_URI": "sadsadasdasd",
+    "key": "adsadadasds",
+    "Secret": "adsadasdadad",
+    "db": "mydatabase",
+    "port": 5432,
+    "host": "localhost"
+  }
+}
+```
+
+`Noted:` If you don't pass any option then the functions will create with no environment variables
+
+---
+
+## Combined Usage (Recommended)
 
 You can use both classes in a single script to download and re-upload a Step Function and its Lambdas in one go.
 

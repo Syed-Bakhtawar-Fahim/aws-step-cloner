@@ -1,10 +1,13 @@
 {
   "name": "aws-step-cloner",
+  "description": "A CLI and utility tool to clone AWS Step Functions with all associated states, parameters, and configurations.",
   "version": "1.0.0",
   "type": "module",
-  "main": "dist/index.js", 
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
@@ -12,15 +15,12 @@
   },
   "keywords": [
     "aws",
-    "aws-step-function",
-    "cloning",
-    "script",
-    "typescipt",
-    "npm",
-    "stepfunction",
-    "aws-lambda"
+    "step-functions",
+    "cloner",
+    "automation",
+    "serverless"
   ],
-  "author": "Syed Bakhtawar Fahim",
+  "author": "Syed Bakhtawar Fahim (https://syedbakhtawarfahim.dev)",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^24.9.1",

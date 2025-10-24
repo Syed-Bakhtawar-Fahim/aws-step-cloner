@@ -1,7 +1,7 @@
 {
   "name": "aws-step-cloner",
   "description": "A CLI and utility tool to clone AWS Step Functions with all associated states, parameters, and configurations.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
